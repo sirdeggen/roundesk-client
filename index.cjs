@@ -1,5 +1,5 @@
 /***********************************************************************************************************************
- * ROundesk Client
+ * Roundesk Client
  * Copyright © 2020 Darren Kellenschwiler
  * Contact: https://roundesk.co/u/deggen@probat.us
  *
@@ -22,6 +22,9 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  **********************************************************************************************************************/
+
+// TODO prerequisites are to set your Moneybutton Client ID found at moneybutton.com
+// TODO Please ensure you have already got moneyButton and or relayone libraries exposed on the page you're signing from.
 
 window.MB_CLIENT = 'PLEASE SET THIS TO A MONEYBUTTON CLIENT IDENTIFIER'
 
@@ -63,114 +66,79 @@ const fletcher = async (url, body) => {
     }
 }
 
-
-roundesk.getPublicProfile = async (paymail) => {
-    const profile = await (await fetch('https://roundesk.co/api/u/' + paymail)).json()
-    console.log(profile)
-    return profile
-}
-
-roundesk.getPrivateProfile = async (paymail, asker) => {
-    let wallet = 'imb'
-    if (asker.split('@')[1] === 'relayx.io') wallet = 'one'
-    let sig
-    let signText
-    if (wallet === 'imb') {
-        const detailsSwipe = await roundesk.imb.swipe({
-            cryptoOperations: [
-                {
-                    name: 'pki',
-                    method: 'public-key',
-                    key: 'identity'
-                }
-            ]
-        })
-        const pki = detailsSwipe.cryptoOperations.find(o => o.name === 'pki').value
-        signText = JSON.stringify({
-            issued_at: Date.now(),
-            paymail: asker,
-            origin: window.location.origin,
-            pubkey: pki
-        })
-        const sigSwipe = await roundesk.imb.swipe({
-            cryptoOperations: [
-                {
-                    name: 'signedText',
-                    method: 'sign',
-                    data: signText,
-                    dataEncoding: 'utf8'
-                }
-            ]
-        })
-        sig = sigSwipe.cryptoOperations.find(o => o.name === 'signedText').value
-    } else {
-        const auth = await (roundesk.one || relayone).authBeta(true)
-        const relayString = auth.split('.')
-        signText = relayString[0]
-        sig = relayString[1]
+roundesk.profiles = async (paymails, asker = undefined) => {
+    // Checking types
+    if (typeof paymails !== 'object' && typeof paymails[0] !== 'string') {
+        console.error('First argument should be an Array of Strings')
+        return []
     }
-    const profile = await fletcher('https://roundesk.co/api/u/' + paymail, {
-        signedData: (wallet === 'imb') ? btoa(signText) : signText,
-        signature: sig
-    })
-    console.log(profile)
-    return profile
-}
-
-roundesk.getPublicProfiles = async (paymails) => {
-    const profiles = await fletcher('https://roundesk.co/api/list/profiles', {
-        paymails: paymails
-    })
-    console.log(profiles)
-    return profiles
-}
-
-roundesk.getProfiles = async (paymails, asker) => {
-    let wallet = 'imb'
-    if (asker.split('@')[1] === 'relayx.io') wallet = 'one'
-    let sig
-    let signText
-    if (wallet === 'imb') {
-        const detailsSwipe = await roundesk.imb.swipe({
-            cryptoOperations: [
-                {
-                    name: 'pki',
-                    method: 'public-key',
-                    key: 'identity'
-                }
-            ]
-        })
-        const pki = detailsSwipe.cryptoOperations.find(o => o.name === 'pki').value
-        signText = JSON.stringify({
-            issued_at: Date.now(),
-            paymail: asker,
-            origin: window.location.origin,
-            pubkey: pki
-        })
-        const sigSwipe = await roundesk.imb.swipe({
-            cryptoOperations: [
-                {
-                    name: 'signedText',
-                    method: 'sign',
-                    data: signText,
-                    dataEncoding: 'utf8'
-                }
-            ]
-        })
-        sig = sigSwipe.cryptoOperations.find(o => o.name === 'signedText').value
+    // if there's a paymail to sign the request then we can ask for private profiles.
+    if (asker) {
+        try {
+            console.log('Attempting signed request')
+            let wallet = 'imb'
+            if (asker.split('@')[1] === 'relayx.io') wallet = 'one'
+            let sig
+            let signText
+            if (wallet === 'imb') {
+                const detailsSwipe = await roundesk.imb.swipe({
+                    cryptoOperations: [
+                        {
+                            name: 'pki',
+                            method: 'public-key',
+                            key: 'identity'
+                        }
+                    ]
+                })
+                const pki = detailsSwipe.cryptoOperations.find(o => o.name === 'pki').value
+                signText = JSON.stringify({
+                    issued_at: Date.now(),
+                    paymail: asker,
+                    origin: window.location.origin,
+                    pubkey: pki
+                })
+                const sigSwipe = await roundesk.imb.swipe({
+                    cryptoOperations: [
+                        {
+                            name: 'signedText',
+                            method: 'sign',
+                            data: signText,
+                            dataEncoding: 'utf8'
+                        }
+                    ]
+                })
+                sig = sigSwipe.cryptoOperations.find(o => o.name === 'signedText').value
+            } else {
+                const auth = await (roundesk.one || relayone).authBeta(true)
+                const relayString = auth.split('.')
+                signText = relayString[0]
+                sig = relayString[1]
+            }
+            // request private profiles. This will return public profiles of any the asker is not connected with,
+            // and private profiles for those we are.
+            const profiles = await fletcher('https://roundesk.co/api/list/profiles', {
+                signedData: (wallet === 'imb') ? btoa(signText) : signText,
+                signature: sig,
+                paymails: paymails
+            })
+            return profiles
+        } catch (er) {
+            console.log(er)
+            return []
+        }
     } else {
-        const auth = await (roundesk.one || relayone).authBeta(true)
-        const relayString = auth.split('.')
-        signText = relayString[0]
-        sig = relayString[1]
+        console.log('Requesting public profiles')
+        try {
+            // return public profiles associated with the list of paymails provided.
+            const profiles = await fletcher('https://roundesk.co/api/list/profiles', {
+                paymails: paymails
+            })
+            return profiles
+        } catch (er) {
+            console.log(er)
+            return []
+        }
     }
-    const profiles = await fletcher('https://roundesk.co/api/list/profiles', {
-        signedData: (wallet === 'imb') ? btoa(signText) : signText,
-        signature: sig,
-        paymails: paymails
-    })
-    console.log('roundesk profiles', profiles)
-    return profiles
 }
 
 export default roundesk
