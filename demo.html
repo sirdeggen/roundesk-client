@@ -2,24 +2,21 @@
 <head>
     <script src='https://moneybutton.com/moneybutton.js'></script>
     <script src='https://one.relayx.io/relayone.js'></script>
-    <script src='https://unpkg.com/roundesk-client'></script>
+    <script src='https://unpkg.com/roundesk-client@0.1.4'></script>
 </head>
 <body>
-    <label for="paymail">Your Paymail</label>
-    <input type="text" name="paymail" id="paymail" onchange="get" />
     <div id="profiles">
         loading...
     </div>
     <script>
-        const get = async () => {
-            // list of profiles you want, and the paymail you're asking from. This would usually be your user's paymail which you probably already know from them logging in.
-            const profiles = await Roundesk.profiles(['ryan@moneybutton.com', 'jack@relayx.io'], 'deggen@probat.us')
+        (async () => {
+            const profiles = await Roundesk.profiles(['ryan@moneybutton.com', 'jack@relayx.io'])
             console.log(profiles)
-            const details = profiles.map(x => {
+            const details = profiles.map(data => {
                 return `
-                <h3>${profiles[x].name}</h3>
-                <h5>${profiles[x].headline}</h5>
-                <p>${profiles[x].bio}</p>
+                <h3>${data.name}</h3>
+                <h5>${data.headline}</h5>
+                <p>${data.bio}</p>
             `})
             const target = document.querySelector('#profiles')
             target.innerHTML = 'loading...'
@@ -28,7 +25,7 @@
                 div.innerHTML = x
                 target.appendChild(div)
             }
-        }
+        })()
     </script>
 </body>
 </html>

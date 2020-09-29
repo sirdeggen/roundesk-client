@@ -37,7 +37,7 @@ const fletcher = async (url, body) => {
     }
 }
 
-const profiles = async (paymails, asker = undefined) => {
+Roundesk.profiles = async (paymails, asker = undefined) => {
     // Checking types
     if (typeof paymails !== 'object' && typeof paymails[0] !== 'string') {
         console.error('First argument should be an Array of Strings')
