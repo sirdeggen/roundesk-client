@@ -26,9 +26,8 @@
 // TODO prerequisites are to set your Moneybutton Client ID found at moneybutton.com
 // TODO Please ensure you have already got moneyButton and or relayone libraries exposed on the page you're signing from.
 
-Roundesk.MB_CLIENT = 'PLEASE SET THIS TO A MONEYBUTTON CLIENT IDENTIFIER'
-
 const Roundesk = {}
+Roundesk.MB_CLIENT = 'PLEASE SET THIS TO A MONEYBUTTON CLIENT IDENTIFIER'
 
 Roundesk.imb = false
 Roundesk.one = false

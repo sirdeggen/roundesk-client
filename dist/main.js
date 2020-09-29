@@ -1,1 +1,113 @@
-!function(e){var t={};function n(o){if(t[o])return t[o].exports;var r=t[o]={i:o,l:!1,exports:{}};return e[o].call(r.exports,r,r.exports,n),r.l=!0,r.exports}n.m=e,n.c=t,n.d=function(e,t,o){n.o(e,t)||Object.defineProperty(e,t,{enumerable:!0,get:o})},n.r=function(e){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},n.t=function(e,t){if(1&t&&(e=n(e)),8&t)return e;if(4&t&&"object"==typeof e&&e&&e.__esModule)return e;var o=Object.create(null);if(n.r(o),Object.defineProperty(o,"default",{enumerable:!0,value:e}),2&t&&"string"!=typeof e)for(var r in e)n.d(o,r,function(t){return e[t]}.bind(null,r));return o},n.n=function(e){var t=e&&e.__esModule?function(){return e.default}:function(){return e};return n.d(t,"a",t),t},n.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},n.p="",n(n.s=0)}([function(e,t,n){"use strict";n.r(t),o.MB_CLIENT="PLEASE SET THIS TO A MONEYBUTTON CLIENT IDENTIFIER";const o={imb:!1,one:!1,setImb:e=>{roundesk.imb=e||new moneyButton.IMB({clientIdentifier:o.MB_CLIENT,suggestedAmount:{amount:"0",currency:"USD"},minimumAmount:{amount:"0",currency:"USD"},onNewPermissionGranted:e=>localStorage.setItem("permissionCode",e),permission:localStorage.permissionCode})},setOne:e=>{roundesk.one=e}},r=async(e,t)=>{try{return(await fetch(e,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify(t)})).json()}catch(t){console.log(0,`\nRoundesk Fletcher:\n${e}`,t)}};t.default=async(e,t)=>{if("object"!=typeof e&&"string"!=typeof e[0])return console.error("First argument should be an Array of Strings"),[];if(t)try{console.log("Attempting signed request");let n,i,a="imb";if("relayx.io"===t.split("@")[1]&&(a="one"),"imb"===a){const e=(await o.imb.swipe({cryptoOperations:[{name:"pki",method:"public-key",key:"identity"}]})).cryptoOperations.find(e=>"pki"===e.name).value;i=JSON.stringify({issued_at:Date.now(),paymail:t,origin:window.location.origin,pubkey:e}),n=(await o.imb.swipe({cryptoOperations:[{name:"signedText",method:"sign",data:i,dataEncoding:"utf8"}]})).cryptoOperations.find(e=>"signedText"===e.name).value}else{const e=(await(o.one||relayone).authBeta(!0)).split(".");i=e[0],n=e[1]}return await r("https://roundesk.co/api/list/profiles",{signedData:"imb"===a?btoa(i):i,signature:n,paymails:e})}catch(e){return console.log(e),[]}else{console.log("Requesting public profiles");try{return await r("https://roundesk.co/api/list/profiles",{paymails:e})}catch(e){return console.log(e),[]}}}}]);
+const Roundesk = {}
+Roundesk.MB_CLIENT = 'PLEASE SET THIS TO A MONEYBUTTON CLIENT IDENTIFIER'
+
+Roundesk.imb = false
+Roundesk.one = false
+
+Roundesk.setImb = (imb) => {
+    if (imb) {
+        roundesk.imb = imb
+    } else {
+        roundesk.imb = new moneyButton.IMB({
+            clientIdentifier: Roundesk.MB_CLIENT,
+            suggestedAmount: {amount: '0', currency: 'USD'},
+            minimumAmount: {amount: '0', currency: 'USD'},
+            onNewPermissionGranted: (permissionCode) => localStorage.setItem('permissionCode', permissionCode),
+            permission: localStorage.permissionCode
+        })
+    }
+}
+
+Roundesk.setOne = (relay) => {
+    roundesk.one = relay
+}
+
+const fletcher = async (url, body) => {
+    try {
+        return (await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(body)
+        })).json()
+    } catch (er) {
+        console.log(0, `\nRoundesk Fletcher:\n${url}`, er)
+    }
+}
+
+const profiles = async (paymails, asker = undefined) => {
+    // Checking types
+    if (typeof paymails !== 'object' && typeof paymails[0] !== 'string') {
+        console.error('First argument should be an Array of Strings')
+        return []
+    }
+    // if there's a paymail to sign the request then we can ask for private profiles.
+    if (asker) {
+        try {
+            console.log('Attempting signed request')
+            let wallet = 'imb'
+            if (asker.split('@')[1] === 'relayx.io') wallet = 'one'
+            let sig
+            let signText
+            if (wallet === 'imb') {
+                const detailsSwipe = await Roundesk.imb.swipe({
+                    cryptoOperations: [
+                        {
+                            name: 'pki',
+                            method: 'public-key',
+                            key: 'identity'
+                        }
+                    ]
+                })
+                const pki = detailsSwipe.cryptoOperations.find(o => o.name === 'pki').value
+                signText = JSON.stringify({
+                    issued_at: Date.now(),
+                    paymail: asker,
+                    origin: window.location.origin,
+                    pubkey: pki
+                })
+                const sigSwipe = await Roundesk.imb.swipe({
+                    cryptoOperations: [
+                        {
+                            name: 'signedText',
+                            method: 'sign',
+                            data: signText,
+                            dataEncoding: 'utf8'
+                        }
+                    ]
+                })
+                sig = sigSwipe.cryptoOperations.find(o => o.name === 'signedText').value
+            } else {
+                const auth = await (Roundesk.one || relayone).authBeta(true)
+                const relayString = auth.split('.')
+                signText = relayString[0]
+                sig = relayString[1]
+            }
+            // request private profiles. This will return public profiles of any the asker is not connected with,
+            // and private profiles for those we are.
+            const profiles = await fletcher('https://roundesk.co/api/list/profiles', {
+                signedData: (wallet === 'imb') ? btoa(signText) : signText,
+                signature: sig,
+                paymails: paymails
+            })
+            return profiles
+        } catch (er) {
+            console.log(er)
+            return []
+        }
+    } else {
+        console.log('Requesting public profiles')
+        try {
+            // return public profiles associated with the list of paymails provided.
+            const profiles = await fletcher('https://roundesk.co/api/list/profiles', {
+                paymails: paymails
+            })
+            return profiles
+        } catch (er) {
+            console.log(er)
+            return []
+        }
+    }
+}

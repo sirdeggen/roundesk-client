@@ -1,0 +1,33 @@
+<html>
+<head>
+    <script src='https://moneybutton.com/moneybutton.js'></script>
+    <script src='https://one.relayx.io/relayone.js'></script>
+    <script src='https://unpkg.com/roundesk-client'></script>
+</head>
+<body>
+    <label for="paymail">Your Paymail</label>
+    <input type="text" name="paymail" id="paymail" onchange="get" />
+    <div id="profiles">
+        loading...
+    </div>
+    <script>
+        const get = async () => {
+            // list of profiles you want, and the paymail you're asking from. This would usually be your user's paymail which you probably already know from them logging in.
+            const profiles = await Roundesk.profiles(['ryan@moneybutton.com', 'jack@relayx.io'], 'deggen@probat.us')
+            console.log(profiles)
+            const details = profiles.map(x => {
+                return `
+                <h3>${profiles[x].name}</h3>
+                <h5>${profiles[x].headline}</h5>
+                <p>${profiles[x].bio}</p>
+            `})
+            const target = document.querySelector('#profiles')
+            for (const x in details) {
+                const div = document.createElement('div')
+                div.innerHTML = x
+                target.appendChild(div)
+            }
+        }
+    </script>
+</body>
+</html>
