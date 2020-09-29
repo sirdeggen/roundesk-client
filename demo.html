@@ -2,7 +2,7 @@
 <head>
     <script src='https://moneybutton.com/moneybutton.js'></script>
     <script src='https://one.relayx.io/relayone.js'></script>
-    <script src='https://unpkg.com/roundesk-client'></script>
+    <script src='https://unpkg.com/roundesk-client@0.1.6?v=9876'></script>
 </head>
 <body>
     <div id="profiles">
@@ -10,21 +10,21 @@
     </div>
     <script>
         (async () => {
-            const profiles = await Roundesk.profiles(['ryan@moneybutton.com', 'jack@relayx.io'])
+            const profiles = await Roundesk.profiles(['deggen@probat.us', 'ryan@moneybutton.com', 'jack@relayx.io'])
             console.log(profiles)
             const details = profiles.map(data => {
                 return `
                 <h3>${data.name}</h3>
-                <h5>${data.headline}</h5>
-                <p>${data.bio}</p>
+                <p>${data.headline}</p>
+                <br />
             `})
             const target = document.querySelector('#profiles')
             target.innerHTML = 'loading...'
-            for (const x in details) {
+            details.forEach( x => {
                 const div = document.createElement('div')
                 div.innerHTML = x
                 target.appendChild(div)
-            }
+            })
         })()
     </script>
 </body>
