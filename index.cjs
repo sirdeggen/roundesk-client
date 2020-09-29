@@ -26,19 +26,19 @@
 // TODO prerequisites are to set your Moneybutton Client ID found at moneybutton.com
 // TODO Please ensure you have already got moneyButton and or relayone libraries exposed on the page you're signing from.
 
-window.MB_CLIENT = 'PLEASE SET THIS TO A MONEYBUTTON CLIENT IDENTIFIER'
+Roundesk.MB_CLIENT = 'PLEASE SET THIS TO A MONEYBUTTON CLIENT IDENTIFIER'
 
-const roundesk = {}
+const Roundesk = {}
 
-roundesk.imb = false
-roundesk.one = false
+Roundesk.imb = false
+Roundesk.one = false
 
-roundesk.setImb = (imb) => {
+Roundesk.setImb = (imb) => {
     if (imb) {
         roundesk.imb = imb
     } else {
         roundesk.imb = new moneyButton.IMB({
-            clientIdentifier: window.MB_CLIENT,
+            clientIdentifier: Roundesk.MB_CLIENT,
             suggestedAmount: {amount: '0', currency: 'USD'},
             minimumAmount: {amount: '0', currency: 'USD'},
             onNewPermissionGranted: (permissionCode) => localStorage.setItem('permissionCode', permissionCode),
@@ -47,7 +47,7 @@ roundesk.setImb = (imb) => {
     }
 }
 
-roundesk.setOne= (relay) => {
+Roundesk.setOne = (relay) => {
     roundesk.one = relay
 }
 
@@ -66,7 +66,7 @@ const fletcher = async (url, body) => {
     }
 }
 
-roundesk.profiles = async (paymails, asker = undefined) => {
+const profiles = async (paymails, asker = undefined) => {
     // Checking types
     if (typeof paymails !== 'object' && typeof paymails[0] !== 'string') {
         console.error('First argument should be an Array of Strings')
@@ -81,7 +81,7 @@ roundesk.profiles = async (paymails, asker = undefined) => {
             let sig
             let signText
             if (wallet === 'imb') {
-                const detailsSwipe = await roundesk.imb.swipe({
+                const detailsSwipe = await Roundesk.imb.swipe({
                     cryptoOperations: [
                         {
                             name: 'pki',
@@ -97,7 +97,7 @@ roundesk.profiles = async (paymails, asker = undefined) => {
                     origin: window.location.origin,
                     pubkey: pki
                 })
-                const sigSwipe = await roundesk.imb.swipe({
+                const sigSwipe = await Roundesk.imb.swipe({
                     cryptoOperations: [
                         {
                             name: 'signedText',
@@ -109,7 +109,7 @@ roundesk.profiles = async (paymails, asker = undefined) => {
                 })
                 sig = sigSwipe.cryptoOperations.find(o => o.name === 'signedText').value
             } else {
-                const auth = await (roundesk.one || relayone).authBeta(true)
+                const auth = await (Roundesk.one || relayone).authBeta(true)
                 const relayString = auth.split('.')
                 signText = relayString[0]
                 sig = relayString[1]
@@ -141,4 +141,4 @@ roundesk.profiles = async (paymails, asker = undefined) => {
     }
 }
 
-export default roundesk
+export default profiles
