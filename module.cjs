@@ -34,9 +34,9 @@ Roundesk.one = false
 
 Roundesk.setImb = (imb) => {
     if (imb) {
-        roundesk.imb = imb
+        Roundesk.imb = imb
     } else {
-        roundesk.imb = new moneyButton.IMB({
+        Roundesk.imb = new moneyButton.IMB({
             clientIdentifier: Roundesk.MB_CLIENT,
             suggestedAmount: {amount: '0', currency: 'USD'},
             minimumAmount: {amount: '0', currency: 'USD'},
@@ -47,7 +47,7 @@ Roundesk.setImb = (imb) => {
 }
 
 Roundesk.setOne = (relay) => {
-    roundesk.one = relay
+    Roundesk.one = relay
 }
 
 const fletcher = async (url, body) => {
