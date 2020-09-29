@@ -3,8 +3,8 @@
   "version": "0.1.3",
   "type": "module",
   "description": "Roundesk, profile data signed by a paymail. a.k.a. bsvalias protocol.",
-  "main": "index.cjs",
-  "unpkg": "dist/main.js",
+  "main": "module.cjs",
+  "unpkg": "browser.js",
   "scripts": {
     "test": "echo \"Error: no test specified\""
   },
