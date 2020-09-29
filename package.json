@@ -1,6 +1,6 @@
 {
   "name": "roundesk-client",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "type": "module",
   "description": "Roundesk, profile data signed by a paymail. a.k.a. bsvalias protocol.",
   "main": "module.cjs",
